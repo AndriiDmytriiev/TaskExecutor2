@@ -16,6 +16,7 @@ using _Imported_Extensions_;
 using System.Data;
 using System.Globalization;
 using Npgsql;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace _Imported_Extensions_
 {
@@ -26,8 +27,8 @@ namespace _Imported_Extensions_
         {
             return Enumerable.Any(te);
         }
-
-        public static TaskEnum ToList(this TaskEnum te)
+        
+         public static TaskEnum ToList(this TaskEnum te)
         {
             return Enumerable.ToList(te);
         }
@@ -41,16 +42,16 @@ namespace TaskUtils
         public static string strDateString = "";
         static void Main(string[] args)
         {
+
             /*var TaskScheduler = new SameThreadTaskScheduler("RunIt");
             TaskScheduler.StartThread("");
             TaskScheduler.GetScheduledTasks();*/
             // Create a scheduler that uses two threads. 
-            var lcts = new SameThreadTaskScheduler("2");
+            
             List<Task> tasks = new List<Task>();
 
             // Create a TaskFactory and pass it our custom scheduler. 
-            TaskFactory factory = new TaskFactory(lcts);
-            CancellationTokenSource cts = new CancellationTokenSource();
+            
 
             // Use our factory to run a set of tasks. 
             Object lockObj = new Object();
@@ -59,8 +60,8 @@ namespace TaskUtils
             for (int tCtr = 0; tCtr <= 4; tCtr++)
             {
                 int iteration = tCtr;
-                Task t = factory.StartNew(() => {
-                    for (int i = 0; i < 1000000; i++)
+                Task t = Task.Run(() => {
+                    for (int i = 0; i < 1000; i++)
                     {
                         lock (lockObj)
                         {
@@ -72,43 +73,50 @@ namespace TaskUtils
                                 Console.WriteLine();
                         }
                     }
-                }, cts.Token);
+                });
+
+
+
                 tasks.Add(t);
             }
             // Use it to run a second set of tasks.                       
-            for (int tCtr = 0; tCtr <= 4; tCtr++)
-            {
-                int iteration = tCtr;
-                Task t1 = factory.StartNew(() => {
-                    for (int outer = 0; outer <= 10; outer++)
-                    {
-                        for (int i = 0; i <= 1; i++)
-                        {
-                            lock (lockObj)
-                            {
-                                Console.Write("'{0}' in task t1-{1} on thread {2}   ",
-                                              Convert.ToChar(i), iteration, Thread.CurrentThread.ManagedThreadId);
-                                outputItem++;
-                                if (outputItem % 3 == 0)
-                                    Console.WriteLine();
-                            }
-                        }
-                    }
-                }, cts.Token);
-                tasks.Add(t1);
-            }
+            //for (int tCtr = 0; tCtr <= 4; tCtr++)
+            //{
+            //    int iteration = tCtr;
+            //    Task t1 = Task.Run(() => {
+            //        for (int outer = 0; outer <= 10; outer++)
+            //        {
+            //            for (int i = 0; i <= 1; i++)
+            //            {
+            //                lock (lockObj)
+            //                {
+            //                    doStuff("Task" + i.ToString());
+            //                    Console.Write("'{0}' in task t1-{1} on thread {2}   ",
+            //                                  Convert.ToChar(i), iteration, Thread.CurrentThread.ManagedThreadId);
+            //                    outputItem++;
+            //                    if (outputItem % 3 == 0)
+            //                        Console.WriteLine();
+            //                }
+            //            }
+            //        }
+            //    });
+            //    tasks.Add(t1);
+            //}
 
             // Wait for the tasks to complete before displaying a completion message.
-            //foreach (Task task in tasks)
-            //{
-            //    task.Start();
-            //}
-            //for (int i = 0; i < 1000; i++)
-            Task.WaitAll(tasks.ToArray());
+
             //Task.WaitAll(tasks.ToArray());
-            cts.Dispose();
+
+            ExecuteJob(tasks.ToArray());
+            
             Console.WriteLine("\n\nSuccessful completion.");
             Console.ReadKey();
+           
+        }
+        private static async void ExecuteJob(Task[] test)
+        {
+
+            await Task.WhenAll(test).ConfigureAwait(false); 
         }
 
         #region publics
@@ -160,6 +168,7 @@ namespace TaskUtils
         private readonly string threadName;
       
         private bool quit;
+        public static string shortDateString = "ddd";
 
         private Thread StartThread(string name)
         {
@@ -229,11 +238,6 @@ namespace TaskUtils
                 var ds = new DataSet();
                 NpgsqlDataReader dr = cmd2.ExecuteReader();
 
-
-
-
-
-
                 dr.Close();
                 conn.Close();
 
@@ -242,12 +246,12 @@ namespace TaskUtils
             using (NpgsqlConnection conn = GetConnection())
             {
                 conn.Open();
-
+               
                 var currentCulture = Thread.CurrentThread.CurrentCulture;
                 try
                 {
                     Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-us");
-                    string shortDateString = DateTime.Now.ToShortDateString();
+                    shortDateString = DateTime.Now.ToShortDateString();
                     var strTime = DateTime.Now.ToLongTimeString();
                     var strDateString = shortDateString.Replace("/ ", "-");
 
@@ -260,23 +264,18 @@ namespace TaskUtils
 
                 var dtNow = new DateTime();
                 string TaskID = "";
-                //strDateString.Hour.ToString() + strDateString.Minute.ToString() + strDateString.Second.ToString();
-                var strSQL = @"insert into TaskResults(TaskID, TaskName, TaskDate) values('"; //& TaskID & "','" & strName & "','" & dtNow)'" ;
-                strSQL += '1' + "','" + strName.ToString();
-                strSQL += "','01/01/2023')";
 
+                Random rnd = new Random();
+                
+                int rndNum = rnd.Next(1000000);
+
+               
+                var strSQL = @"insert into TaskResults(TaskID, TaskName, TaskDate) values('"; 
+                strSQL += rndNum.ToString() + "','" + strName.ToString();
+                strSQL += "','" +shortDateString + "'" + ")";
 
                 var cmd2 = new NpgsqlCommand(strSQL, conn);
-
-
-
-
                 int nNoAdded = cmd2.ExecuteNonQuery();
-
-
-
-
-
 
                 conn.Close();
 
