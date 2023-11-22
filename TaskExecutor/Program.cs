@@ -17,6 +17,7 @@ using System.Data;
 using System.Globalization;
 using Npgsql;
 using static System.Net.Mime.MediaTypeNames;
+using System.Diagnostics;
 
 namespace _Imported_Extensions_
 {
@@ -42,12 +43,12 @@ namespace TaskUtils
         public static string strDateString = "";
         static void Main(string[] args)
         {
-
+            Stopwatch sw = Stopwatch.StartNew();
             /*var TaskScheduler = new SameThreadTaskScheduler("RunIt");
             TaskScheduler.StartThread("");
             TaskScheduler.GetScheduledTasks();*/
             // Create a scheduler that uses two threads. 
-            
+
             List<Task> tasks = new List<Task>();
 
             // Create a TaskFactory and pass it our custom scheduler. 
@@ -57,20 +58,18 @@ namespace TaskUtils
             Object lockObj = new Object();
             int outputItem = 0;
 
-            for (int tCtr = 0; tCtr <= 4; tCtr++)
+            for (int tCtr = 0; tCtr <= 1; tCtr++)
             {
                 int iteration = tCtr;
                 Task t = Task.Run(() => {
-                    for (int i = 0; i < 1000; i++)
+                    for (int i = 0; i < 5000; i++)
                     {
                         lock (lockObj)
                         {
                             doStuff("Task"+i.ToString());
-                            Console.Write("{0} in task t-{1} on thread {2}   ",
-                                          i, iteration, Thread.CurrentThread.ManagedThreadId);
+                           
                             outputItem++;
-                            if (outputItem % 3 == 0)
-                                Console.WriteLine();
+                            
                         }
                     }
                 });
@@ -79,38 +78,13 @@ namespace TaskUtils
 
                 tasks.Add(t);
             }
-            // Use it to run a second set of tasks.                       
-            //for (int tCtr = 0; tCtr <= 4; tCtr++)
-            //{
-            //    int iteration = tCtr;
-            //    Task t1 = Task.Run(() => {
-            //        for (int outer = 0; outer <= 10; outer++)
-            //        {
-            //            for (int i = 0; i <= 1; i++)
-            //            {
-            //                lock (lockObj)
-            //                {
-            //                    doStuff("Task" + i.ToString());
-            //                    Console.Write("'{0}' in task t1-{1} on thread {2}   ",
-            //                                  Convert.ToChar(i), iteration, Thread.CurrentThread.ManagedThreadId);
-            //                    outputItem++;
-            //                    if (outputItem % 3 == 0)
-            //                        Console.WriteLine();
-            //                }
-            //            }
-            //        }
-            //    });
-            //    tasks.Add(t1);
-            //}
-
-            // Wait for the tasks to complete before displaying a completion message.
-
-            //Task.WaitAll(tasks.ToArray());
+           
 
             ExecuteJob(tasks.ToArray());
-            
-            Console.WriteLine("\n\nSuccessful completion.");
+
+            Console.WriteLine("Work of programm within: {0:f2} s", sw.Elapsed.TotalSeconds);
             Console.ReadKey();
+          
            
         }
         private static async void ExecuteJob(Task[] test)
@@ -262,8 +236,7 @@ namespace TaskUtils
                     Thread.CurrentThread.CurrentCulture = currentCulture;
                 }
 
-                var dtNow = new DateTime();
-                string TaskID = "";
+            
 
                 Random rnd = new Random();
                 
@@ -282,7 +255,7 @@ namespace TaskUtils
             }
 
 
-            //MessageBox.Show(strName);
+   
 
             Thread.Yield();
 
